@@ -51,11 +51,19 @@ class ViewController: UIViewController {
     /// - parameter range: The range of the text to remove.
     /// - parameter toTextView: The `UITextView` to remove the text from.
     func removeTextFromRange(range: NSRange, fromTextView textView: UITextView) {
+        let substringLength = (textView.text as NSString).substringWithRange(range).length
+        let previousRange = textView.selectedRange
         textView.textStorage.beginEditing()
         textView.textStorage.replaceCharactersInRange(range, withAttributedString: NSAttributedString(string: ""))
         textView.textStorage.endEditing()
-        textView.selectedRange.location -= range.length
+
+        let offset = substringLength - (previousRange.location - textView.selectedRange.location)
+
+        textView.selectedRange.location -= offset
+
+        textViewDidChangeSelection(textView)
     }
+
 
     /// Adds text to a textView at a specified index
     ///
@@ -69,6 +77,7 @@ class ViewController: UIViewController {
         textView.textStorage.insertAttributedString(NSAttributedString(string: text, attributes: attributes), atIndex: index)
         textView.textStorage.endEditing()
         textView.selectedRange.location += text.length
+        textViewDidChangeSelection(textView)
     }
 
     /// Toggles a numbered list on the current line if there is a zero-length selection;
@@ -78,9 +87,12 @@ class ViewController: UIViewController {
         if textView.selectedRange.length == 0 {
             if selectionContainsNumberedList(textView.selectedRange) {
                 if let newLineIndex = textView.text.previousIndexOfSubstring("\n", fromIndex: textView.selectedRange.location) {
-//                    let newRange =
-                } else {
+                    guard let previousNumber = previousNumberOfNumberedList(textView.selectedRange) else { return }
 
+                    var range = NSRange(location: newLineIndex+1, length: "\(previousNumber)\(numberedListTrailer)".length)
+                    removeTextFromRange(range, fromTextView: textView)
+                } else {
+                    removeTextFromRange(NSRange(location: 0, length: numberedListTrailer.length+1), fromTextView: textView)
                 }
             } else {
                 if let newLineIndex = textView.text.previousIndexOfSubstring("\n", fromIndex: textView.selectedRange.location) {
@@ -128,11 +140,11 @@ class ViewController: UIViewController {
         return containsNumberedList
     }
 
-    /// Returns the number of the previous lines number starting from the location of the selection.  
+    /// Returns the number of the previous number starting from the location of the selection.
     ///
     /// - parameter selection: The selection to check from
     ///
-    /// - returns: Previous number if it exists in the previous line, `nil` otherwise
+    /// - returns: Previous number if it exists in the current line, `nil` otherwise
     func previousNumberOfNumberedList(selection: NSRange) -> Int? {
         guard let previousIndex = textView.text.previousIndexOfSubstring(numberedListTrailer, fromIndex: selection.location) else { return nil }
         guard var newLineIndex = textView.text.previousIndexOfSubstring("\n", fromIndex: previousIndex) else { return 1 }
@@ -140,13 +152,84 @@ class ViewController: UIViewController {
 
         return Int((textView.text as NSString).substringWithRange(NSRange(location: newLineIndex, length: previousIndex - newLineIndex)))
     }
+
+    /// Appends a number to the text view if we are currently in a list.  Also deletes existing number if there is no text on the line.  This function should be called when the user inserts a new line (presses return)
+    ///
+    /// - parameter range: The location to insert the number
+    ///
+    /// - returns: `true` if a number was added, `false` otherwise
+    func addedListsIfActiveInRange(range: NSRange) -> Bool {
+        guard selectionContainsNumberedList(range) else { return false }
+
+        let previousNumber = previousNumberOfNumberedList(range) ?? 0
+        let previousNumberString = "\(previousNumber)\(numberedListTrailer)"
+        let previousRange = NSRange(location: range.location - previousNumberString.length, length: previousNumberString.length)
+        var newNumber = previousNumber + 1
+        let newNumberString = "\n\(newNumber)\(numberedListTrailer)"
+
+        if textView.attributedText.attributedSubstringFromRange(previousRange).string == previousNumberString {
+            removeTextFromRange(previousRange, fromTextView: textView)
+        } else {
+            addText(newNumberString, toTextView: textView, atIndex: range.location)
+
+            // TODO: Complete iterating through the string incrementing the numbers
+//            var index = range.location
+//            var previousIndex = -1
+//
+//            while index != previousIndex {
+//
+//                newNumber += 1
+//                let nextRange = textView.text.
+//
+//                index = textView.text.nextIndexOfSubstring(numberedListTrailer, fromIndex: index) ?? previousIndex
+//            }
+        }
+
+        return true
+    }
+
+    /// Removes a number from a numbered list.  This function should be called when the user is backspacing on a number of a numbered list
+    ///
+    /// - parameter range: The range from which to remove the number
+    ///
+    /// - returns: true if a number was removed, false otherwise
+    func removedListsIfActiveInRange(range: NSRange) -> Bool {
+        guard textView.selectedRange.location > 2 else { return false }
+
+        var removed = false
+        let previousNumber = previousNumberOfNumberedList(textView.selectedRange) ?? 0
+        let previousNumberString = "\(previousNumber)\(numberedListTrailer)"
+        let previousRange = NSRange(location: range.location - previousNumberString.length + 1, length: previousNumberString.length)
+
+        let subString = (textView.text as NSString).substringWithRange(previousRange)
+
+        if subString == previousNumberString {
+            removeTextFromRange(previousRange, fromTextView: textView)
+            removed = true
+        }
+        return removed
+    }
+
 }
 
 extension ViewController: UITextViewDelegate {
     
     func textViewDidChangeSelection(textView: UITextView) {
         view.backgroundColor = selectionContainsNumberedList(textView.selectedRange) ? UIColor.greenColor() : UIColor.blueColor()
-        print(previousNumberOfNumberedList(textView.selectedRange))
     }
-    
+
+    func textView(textView: UITextView, shouldChangeTextInRange range: NSRange, replacementText text: String) -> Bool {
+        var changed = false
+
+        switch text {
+        case "\n":
+            changed = addedListsIfActiveInRange(range)
+        case "":
+            changed = removedListsIfActiveInRange(range)
+        default:
+            break
+        }
+
+        return !changed
+    }
 }

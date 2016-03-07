@@ -6,7 +6,7 @@
 //  Copyright © 2016 LyokoTech. All rights reserved.
 //
 
-import Foundation
+import UIKit
 
 extension UITextView {
     var selectedNewRange: Range<String.Index> {
