@@ -48,4 +48,8 @@ extension String {
         return nil
     }
 
+    var length: Int {
+        return (self as NSString).length
+    }
+
 }

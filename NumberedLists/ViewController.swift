@@ -68,7 +68,7 @@ class ViewController: UIViewController {
         textView.textStorage.beginEditing()
         textView.textStorage.insertAttributedString(NSAttributedString(string: text, attributes: attributes), atIndex: index)
         textView.textStorage.endEditing()
-        textView.selectedRange.location += (text as NSString).length
+        textView.selectedRange.location += text.length
     }
 
     /// Toggles a numbered list on the current line if there is a zero-length selection;
@@ -77,15 +77,23 @@ class ViewController: UIViewController {
     func toggleNumberedList() {
         if textView.selectedRange.length == 0 {
             if selectionContainsNumberedList(textView.selectedRange) {
+                if let newLineIndex = textView.text.previousIndexOfSubstring("\n", fromIndex: textView.selectedRange.location) {
+//                    let newRange =
+                } else {
 
+                }
             } else {
                 if let newLineIndex = textView.text.previousIndexOfSubstring("\n", fromIndex: textView.selectedRange.location) {
-
+                    let newNumber = (previousNumberOfNumberedList(textView.selectedRange) ?? 0) + 1
+                    let insertString = "\(newNumber)\(numberedListTrailer)"
+                    addText(insertString, toTextView: textView, atIndex: newLineIndex + 1)
                 } else {
                     let insertString = "1\(numberedListTrailer)"
                     addText(insertString, toTextView: textView, atIndex: 0)
                 }
             }
+        } else {
+
         }
     }
 
@@ -100,8 +108,10 @@ class ViewController: UIViewController {
 
         if selection.length == 0 {
             if let previousIndex = textView.text.previousIndexOfSubstring(numberedListTrailer, fromIndex: selection.location) {
-                if let newLineIndex = textView.text.previousIndexOfSubstring("\n", fromIndex: selection.location) where (newLineIndex + 1) == previousIndex {
-                    containsNumberedList = true
+                if let newLineIndex = textView.text.previousIndexOfSubstring("\n", fromIndex: selection.location) {
+                    if let comparisonIndex = textView.text.nextIndexOfSubstring(numberedListTrailer, fromIndex: newLineIndex) where previousIndex == comparisonIndex {
+                        containsNumberedList = true
+                    }
                 } else {
                     containsNumberedList = true
                 }
@@ -124,7 +134,11 @@ class ViewController: UIViewController {
     ///
     /// - returns: Previous number if it exists in the previous line, `nil` otherwise
     func previousNumberOfNumberedList(selection: NSRange) -> Int? {
-        return nil
+        guard let previousIndex = textView.text.previousIndexOfSubstring(numberedListTrailer, fromIndex: selection.location) else { return nil }
+        guard var newLineIndex = textView.text.previousIndexOfSubstring("\n", fromIndex: previousIndex) else { return 1 }
+        newLineIndex += 1
+
+        return Int((textView.text as NSString).substringWithRange(NSRange(location: newLineIndex, length: previousIndex - newLineIndex)))
     }
 }
 
@@ -132,6 +146,7 @@ extension ViewController: UITextViewDelegate {
     
     func textViewDidChangeSelection(textView: UITextView) {
         view.backgroundColor = selectionContainsNumberedList(textView.selectedRange) ? UIColor.greenColor() : UIColor.blueColor()
+        print(previousNumberOfNumberedList(textView.selectedRange))
     }
     
 }
