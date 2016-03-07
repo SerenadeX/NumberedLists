@@ -13,6 +13,8 @@
 		5971DBC81C8DEEBB000B157F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5971DBC71C8DEEBB000B157F /* Assets.xcassets */; };
 		5971DBCB1C8DEEBB000B157F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 5971DBC91C8DEEBB000B157F /* LaunchScreen.storyboard */; };
 		5971DBD31C8DF904000B157F /* String+Searching.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5971DBD21C8DF904000B157F /* String+Searching.swift */; };
+		5971DBD61C8E1A2E000B157F /* UITextView+Range.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5971DBD51C8E1A2E000B157F /* UITextView+Range.swift */; };
+		5971DBD81C8E1A3F000B157F /* NSRange+Range.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5971DBD71C8E1A3F000B157F /* NSRange+Range.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -24,6 +26,8 @@
 		5971DBCA1C8DEEBB000B157F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		5971DBCC1C8DEEBB000B157F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		5971DBD21C8DF904000B157F /* String+Searching.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "String+Searching.swift"; sourceTree = "<group>"; };
+		5971DBD51C8E1A2E000B157F /* UITextView+Range.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UITextView+Range.swift"; sourceTree = "<group>"; };
+		5971DBD71C8E1A3F000B157F /* NSRange+Range.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "NSRange+Range.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -62,9 +66,19 @@
 				5971DBC71C8DEEBB000B157F /* Assets.xcassets */,
 				5971DBC91C8DEEBB000B157F /* LaunchScreen.storyboard */,
 				5971DBCC1C8DEEBB000B157F /* Info.plist */,
-				5971DBD21C8DF904000B157F /* String+Searching.swift */,
+				5971DBD41C8E1A1D000B157F /* Util */,
 			);
 			path = NumberedLists;
+			sourceTree = "<group>";
+		};
+		5971DBD41C8E1A1D000B157F /* Util */ = {
+			isa = PBXGroup;
+			children = (
+				5971DBD21C8DF904000B157F /* String+Searching.swift */,
+				5971DBD51C8E1A2E000B157F /* UITextView+Range.swift */,
+				5971DBD71C8E1A3F000B157F /* NSRange+Range.swift */,
+			);
+			name = Util;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -140,7 +154,9 @@
 			files = (
 				5971DBD31C8DF904000B157F /* String+Searching.swift in Sources */,
 				5971DBC31C8DEEBB000B157F /* ViewController.swift in Sources */,
+				5971DBD81C8E1A3F000B157F /* NSRange+Range.swift in Sources */,
 				5971DBC11C8DEEBB000B157F /* AppDelegate.swift in Sources */,
+				5971DBD61C8E1A2E000B157F /* UITextView+Range.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
