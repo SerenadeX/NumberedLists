@@ -13,7 +13,8 @@ class ViewController: UIViewController {
     var textView = UITextView()
     var triggerButton = UIButton(type: .InfoLight)
     var numberedListTrailer = ".\u{00A0}"
-
+    var previousSelection = NSRange()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -46,6 +47,27 @@ class ViewController: UIViewController {
         // Dispose of any resources that can be recreated.
     }
 
+    /// Replaces text in a range with text in parameter
+    ///
+    /// - parameter range: The range at which to replace the string.
+    /// - parameter withText: The text that will be inserted.
+    /// - parameter inTextView: The textView in which changes will occur.
+    func replaceTextInRange(range: NSRange, withText replacementText: String, inTextView textView: UITextView) {
+        let substringLength = (textView.text as NSString).substringWithRange(range).length
+        let lengthDifference = substringLength - replacementText.length
+        let previousRange = textView.selectedRange
+        let attributes = textView.attributedText.attributesAtIndex(range.location, effectiveRange: nil)
+        
+        textView.textStorage.beginEditing()
+        textView.textStorage.replaceCharactersInRange(range, withAttributedString: NSAttributedString(string: replacementText, attributes: attributes))
+        textView.textStorage.endEditing()
+        
+        let offset = lengthDifference - (previousRange.location - textView.selectedRange.location)
+        textView.selectedRange.location -= offset
+        
+        textViewDidChangeSelection(textView)
+    }
+    
     /// Removes text from a textView at a specified index
     ///
     /// - parameter range: The range of the text to remove.
@@ -173,16 +195,20 @@ class ViewController: UIViewController {
             addText(newNumberString, toTextView: textView, atIndex: range.location)
 
             // TODO: Complete iterating through the string incrementing the numbers
-//            var index = range.location
-//            var previousIndex = -1
-//
-//            while index != previousIndex {
-//
-//                newNumber += 1
-//                let nextRange = textView.text.
-//
-//                index = textView.text.nextIndexOfSubstring(numberedListTrailer, fromIndex: index) ?? previousIndex
-//            }
+            var index = range.location + newNumberString.length
+
+            while true {
+                let stringToReplace = "\(newNumber)\(numberedListTrailer)"
+                print("Before index: \(index); searchString: \(stringToReplace)")
+                index = textView.text.nextIndexOfSubstring(stringToReplace, fromIndex: index) ?? -1
+                print("After index: \(index)")
+                guard index >= 0 else { break }
+                
+                newNumber += 1
+                
+                replaceTextInRange(NSRange(location: index, length: stringToReplace.length), withText: "\(newNumber)\(numberedListTrailer)", inTextView: textView)
+                index += 1
+            }
         }
 
         return true
@@ -209,13 +235,78 @@ class ViewController: UIViewController {
         }
         return removed
     }
+    
+    /// Moves the selection out of a number.  Call this when a selection changes
+    private func moveSelectionIfInRangeOfList() {
+        guard textView.text.length > 1 && textView.selectedRange.location < textView.text.length,
+            let number = previousNumberOfNumberedList(NSRange(location: textView.selectedRange.location + 1, length: textView.selectedRange.length))
+            else {
+                return
+        }
+        
+        
+        var range = NSRange(location: textView.selectedRange.location, length: textView.selectedRange.length)
+        var newLineIndex = textView.text.previousIndexOfSubstring("\n", fromIndex: range.location) ?? 0
+        
+        newLineIndex += newLineIndex == 0 ? 0 : 1
+        
+        print("checking", newLineIndex, range.location)
+        if newLineIndex == range.location {
+            let nextNewLine = textView.text.nextIndexOfSubstring("\n", fromIndex: newLineIndex) ?? -1
+            let nextNumberTrailerIndex = textView.text.nextIndexOfSubstring(numberedListTrailer, fromIndex: newLineIndex) ?? -1
+            
+            if nextNumberTrailerIndex < nextNewLine {
+                range.location = nextNumberTrailerIndex + numberedListTrailer.length
+            }
+        }
+        
+        
+        print("Before", range, newLineIndex)
+        range.length = range.length + (range.location - newLineIndex) + 1
+        range.location = newLineIndex
+        print("after", range)
+        
+        let testString = (textView.text as NSString).substringWithRange(range)
+        let goingBackward = previousSelection.location > range.location
+        
+
+        print("Starting Loop", "'\(testString)'", "'\(number)\(numberedListTrailer)'", goingBackward, previousSelection, range)
+        if testString == "\(number)\(numberedListTrailer)" {
+            if goingBackward {
+                range.location -= 1
+            }
+            
+            range.location = range.location < 3 ? 3 : range.location
+            range.length = 0
+            print("test", range, textView.selectedRange)
+            textView.selectedRange = range
+//            break
+        }
+        
+        
+//        while loops < range.length {
+//            print(range, loops)
+//            
+//            
+//            if range.location > 0 {
+//                range.location -= 1
+//            } else {
+//                break
+//            }
+//            testString = (textView.text as NSString).substringWithRange(range)
+//            loops += 1
+//        }
+        
+    }
 
 }
 
 extension ViewController: UITextViewDelegate {
     
     func textViewDidChangeSelection(textView: UITextView) {
+        moveSelectionIfInRangeOfList()
         view.backgroundColor = selectionContainsNumberedList(textView.selectedRange) ? UIColor.greenColor() : UIColor.blueColor()
+        previousSelection = textView.selectedRange
     }
 
     func textView(textView: UITextView, shouldChangeTextInRange range: NSRange, replacementText text: String) -> Bool {
