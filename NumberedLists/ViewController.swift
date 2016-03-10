@@ -239,19 +239,20 @@ class ViewController: UIViewController {
     /// Moves the selection out of a number.  Call this when a selection changes
     private func moveSelectionIfInRangeOfList() {
         guard textView.text.length > 1 && textView.selectedRange.location < textView.text.length,
-            let number = previousNumberOfNumberedList(NSRange(location: textView.selectedRange.location + 1, length: textView.selectedRange.length))
+            var number = previousNumberOfNumberedList(NSRange(location: textView.selectedRange.location + 1, length: textView.selectedRange.length))
             else {
                 return
         }
-        
         
         var range = NSRange(location: textView.selectedRange.location, length: textView.selectedRange.length)
         var newLineIndex = textView.text.previousIndexOfSubstring("\n", fromIndex: range.location) ?? 0
         
         newLineIndex += newLineIndex == 0 ? 0 : 1
         
-        print("checking", newLineIndex, range.location)
+        var goingForward = false
         if newLineIndex == range.location {
+            number += 1
+            goingForward = true
             let nextNewLine = textView.text.nextIndexOfSubstring("\n", fromIndex: newLineIndex) ?? -1
             let nextNumberTrailerIndex = textView.text.nextIndexOfSubstring(numberedListTrailer, fromIndex: newLineIndex) ?? -1
             
@@ -260,43 +261,23 @@ class ViewController: UIViewController {
             }
         }
         
-        
-        print("Before", range, newLineIndex)
-        range.length = range.length + (range.location - newLineIndex) + 1
+        range.length = range.length + (range.location - newLineIndex) + (goingForward ? 0 : 1)
         range.location = newLineIndex
-        print("after", range)
         
         let testString = (textView.text as NSString).substringWithRange(range)
         let goingBackward = previousSelection.location > range.location
-        
 
-        print("Starting Loop", "'\(testString)'", "'\(number)\(numberedListTrailer)'", goingBackward, previousSelection, range)
         if testString == "\(number)\(numberedListTrailer)" {
             if goingBackward {
                 range.location -= 1
+            } else {
+                range.location += "\(number)\(numberedListTrailer)".length
             }
             
             range.location = range.location < 3 ? 3 : range.location
             range.length = 0
-            print("test", range, textView.selectedRange)
             textView.selectedRange = range
-//            break
         }
-        
-        
-//        while loops < range.length {
-//            print(range, loops)
-//            
-//            
-//            if range.location > 0 {
-//                range.location -= 1
-//            } else {
-//                break
-//            }
-//            testString = (textView.text as NSString).substringWithRange(range)
-//            loops += 1
-//        }
-        
     }
 
 }
